@@ -1,8 +1,9 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
 
 android {
     compileSdkVersion 26
-
 
 
     defaultConfig {
@@ -33,4 +34,101 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'io.reactivex.rxjava2:rxjava:2.1.14'
     implementation 'com.android.support:support-annotations:+'
+}
+//项目主页
+def siteUrl = 'https://github.com/guowee/KeepLiveService'    // project homepage
+//项目的版本控制地址
+def gitUrl = 'https://github.com/guowee/KeepLiveService.git' // project git
+
+//发布到组织名称名字，必须填写
+group = "com.missile.daemon"
+//发布到JCenter上的项目名字，必须填写
+def libName = "daemon-guard"
+// 版本号，下次更新是只需要更改版本号即可
+version = "1.0.0"
+
+//生成源文件
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+//生成文档
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    options.encoding "UTF-8"
+    options.charSet 'UTF-8'
+    options.author true
+    options.version true
+    options.links "https://github.com/guowee/KeepLiveService/tree/master/daemon-guard/docs/javadoc"
+    failOnError false
+}
+
+//文档打包成jar
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+//拷贝javadoc文件
+task copyDoc(type: Copy) {
+    from "${buildDir}/docs/"
+    into "docs"
+}
+
+//上传到jcenter所需要的源码文件
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+// 配置maven库，生成POM.xml文件
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                name 'This is a library to keep android service alive in background.'
+                url siteUrl
+                // 软件开源协议，现在一般都是Apache License2.0
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'aliex'        //填写bintray或者github的用户名
+                        name 'aliex'         //姓名
+                        email 'guoweegw@gmail.com'//邮箱
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+                }
+            }
+        }
+    }
+}
+
+//上传到jcenter
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+bintray {
+    user = properties.getProperty("bintray.user")    //读取 local.properties 文件里面的 bintray.user
+    key = properties.getProperty("bintray.apikey")   //读取 local.properties 文件里面的 bintray.apikey
+    configurations = ['archives']
+    pkg {
+        repo = "maven"
+        name = libName    //发布到JCenter上的项目名字，必须填写
+        desc = 'This is a library to keep android service alive in background.'    //项目描述
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        publish = true
+    }
 }
