@@ -22,6 +22,7 @@ import io.reactivex.functions.Consumer;
 
 public class WatchGuardService extends Service {
 
+
     protected static final int HASH_CODE = 0x02;
     protected static Disposable sDisposable;
     protected static PendingIntent sPendingIntent;
@@ -97,6 +98,10 @@ public class WatchGuardService extends Service {
             }
         });
 
+        //使用Native的方式
+        IDaemonStrategy.Fetcher.fetchStrategy().onPersistentCreate(DaemonEnv.sApp, DaemonEnv.sServiceClass);
+
+
         //守护 Service 组件的启用状态, 使其不被 MAT 等工具禁用
         getPackageManager().setComponentEnabledSetting(new ComponentName(getPackageName(), DaemonEnv.sServiceClass.getName()),
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
@@ -136,8 +141,6 @@ public class WatchGuardService extends Service {
         if (sDisposable != null) {
             sDisposable.dispose();
         }
-
-
     }
 
 

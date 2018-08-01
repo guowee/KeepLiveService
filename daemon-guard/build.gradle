@@ -14,12 +14,26 @@ android {
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
+        ndk {
+            abiFilters 'armeabi', 'armeabi-v7a', 'x86'
+        }
+
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    externalNativeBuild {
+        ndkBuild {
+            path "src/main/jni/Android.mk"
+        }
+    }
+    sourceSets {
+        main {
+            jniLibs.srcDirs =['libs']
         }
     }
 
@@ -34,6 +48,17 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'io.reactivex.rxjava2:rxjava:2.1.14'
     implementation 'com.android.support:support-annotations:+'
+}
+
+task ndkBuild(type: Exec) {
+    def ndkDir = project.android.ndkDirectory.absolutePath
+    commandLine "$ndkDir/build/ndk-build.cmd", '-C', 'src/main/jni',
+            "NDK_OUT=$buildDir/ndk/obj",
+            "NDK_APP_DST_DIR=$buildDir/ndk/libs/\$(TARGRT_ARCH_ABI)"
+}
+task buildExeFile(type: Copy, dependsOn: ndkBuild) {
+    from fileTree(dir: file(buildDir.absolutePath + '/ndk/libs'), include: '**/*')
+    into file('src/main/assets/')
 }
 //项目主页
 def siteUrl = 'https://github.com/guowee/KeepLiveService'    // project homepage
